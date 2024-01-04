@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -81,12 +80,12 @@ func GetDeviceList() []model.Device {
 	return result.Body.DeviceList
 }
 
-func GetPlugMiniStatus(device_id string) {
+func GetPlugMiniStatus(device_id string) model.PlugMiniResponseModel {
 	p := []string{"devices", device_id, "status"}
 	b := invoke(http.MethodGet, p...)
 	var plugmini_status model.PlugMiniResponseModel
 	if err := json.Unmarshal(b, &plugmini_status); err != err {
 		log.Fatal(err)
 	}
-	fmt.Println(plugmini_status)
+	return plugmini_status
 }
