@@ -89,3 +89,13 @@ func GetPlugMiniStatus(device_id string) model.PlugMiniResponseModel {
 	}
 	return plugmini_status
 }
+
+func GetHub2Status(device_id string) model.Hub2ResponseModel {
+	p := []string{"devices", device_id, "status"}
+	b := invoke(http.MethodGet, p...)
+	var hub2_status model.Hub2ResponseModel
+	if err := json.Unmarshal(b, &hub2_status); err != err {
+		log.Fatal(err)
+	}
+	return hub2_status
+}
