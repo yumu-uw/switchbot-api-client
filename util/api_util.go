@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"github.com/yumu-uw/switchbot-api-client/model"
 )
 
@@ -27,8 +26,7 @@ var (
 	sign       string
 )
 
-func init() {
-	loadEnv()
+func InitApiUtil() {
 	token = os.Getenv("TOKEN")
 	secret := os.Getenv("SECRET")
 	nonce, _ = uuid.NewUUID()
@@ -38,13 +36,6 @@ func init() {
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(data))
 	sign = base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
-func loadEnv() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		panic("can't read .env file")
-	}
 }
 
 func invoke(method string, end_point_path ...string) []byte {
@@ -80,22 +71,12 @@ func GetDeviceList() []model.Device {
 	return result.Body.DeviceList
 }
 
-func GetPlugMiniStatus(device_id string) model.PlugMiniResponseModel {
+func GetDeviceStatus(device_id string) map[string]interface{} {
 	p := []string{"devices", device_id, "status"}
 	b := invoke(http.MethodGet, p...)
-	var plugmini_status model.PlugMiniResponseModel
-	if err := json.Unmarshal(b, &plugmini_status); err != err {
+	var obj map[string]interface{}
+	if err := json.Unmarshal(b, &obj); err != err {
 		log.Fatal(err)
 	}
-	return plugmini_status
-}
-
-func GetHub2Status(device_id string) model.Hub2ResponseModel {
-	p := []string{"devices", device_id, "status"}
-	b := invoke(http.MethodGet, p...)
-	var hub2_status model.Hub2ResponseModel
-	if err := json.Unmarshal(b, &hub2_status); err != err {
-		log.Fatal(err)
-	}
-	return hub2_status
+	return obj
 }
