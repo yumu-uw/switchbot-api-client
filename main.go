@@ -1,10 +1,15 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/joho/godotenv"
 	"github.com/yumu-uw/switchbot-api-client/exporter"
 	"github.com/yumu-uw/switchbot-api-client/util"
 )
+
+var output string
+var outputPath string
 
 func loadEnv() {
 	err := godotenv.Load(".env")
@@ -13,8 +18,15 @@ func loadEnv() {
 	}
 }
 
+func parseArgs() {
+	flag.StringVar(&output, "output", "json", "取得したデータの出力方法")
+	flag.StringVar(&outputPath, "path", "./output.json", "jsonの出力先（outputがjsonの場合のみ有効）")
+	flag.Parse()
+}
+
 func main() {
 	loadEnv()
+	parseArgs()
 	util.InitApiUtil()
 
 	var status_list []map[string]interface{}
@@ -26,22 +38,21 @@ func main() {
 		status_list = append(status_list, r)
 	}
 
-	for _, v := range status_list {
-		device_type, _ := v["DeviceType"].(string)
-		device_name, _ := v["DeviceName"].(string)
-		body := v["body"].(map[string]interface{})
-
-		tags := map[string]string{
-			"device_type": device_type,
-			"device_name": device_name,
-		}
+	switch output {
+	case "json":
+		exporter.ExportToJson(status_list)
+	case "influxdb":
 		exporter.InitInfluxDBExporter()
-		exporter.ExportToInfluxDB(tags, body)
+		for _, v := range status_list {
+			device_type, _ := v["DeviceType"].(string)
+			device_name, _ := v["DeviceName"].(string)
+			body := v["body"].(map[string]interface{})
+
+			tags := map[string]string{
+				"device_type": device_type,
+				"device_name": device_name,
+			}
+			exporter.ExportToInfluxDB(tags, body)
+		}
 	}
-	// bytes, err := json.Marshal(o)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(string(bytes))
-	// util.DBTest()
 }
